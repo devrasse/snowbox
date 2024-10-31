@@ -52,7 +52,7 @@ def wrap_text(words, max_line_length=20):
     return wrapped_text
 
 
-def create_map(df, geo, logo_img):
+ef create_map(df, geo, logo_img):
     # 맵 생성
     map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom=10, max_zoom=18)
     
@@ -73,7 +73,7 @@ def create_map(df, geo, logo_img):
                         }).addTo(map);
                     },
                     function(error) {
-                        console.log('위치를 찾을 수 없습니다.');
+                        alert('위치를 찾을 수 없습니다.');
                     },
                     {
                         enableHighAccuracy: true,
@@ -82,71 +82,67 @@ def create_map(df, geo, logo_img):
                     }
                 );
             } else {
-                console.log('위치 서비스를 지원하지 않는 브라우저입니다.');
+                alert('위치 서비스를 지원하지 않는 브라우저입니다.');
             }
         }
     """
     
     # CSS 스타일 추가
-    map1.get_root().html.add_child(folium.Element("""
-        <style>
-            .locate-button {
-                background-color: white;
-                width: 30px;
-                height: 30px;
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-                cursor: pointer;
-                margin: 10px;
-            }
-            .locate-button:hover {
-                background-color: #f4f4f4;
-            }
-            .current-location {
-                animation: pulse 2s infinite;
-            }
-            @keyframes pulse {
-                0% { transform: scale(1); opacity: 1; }
-                50% { transform: scale(1.2); opacity: 0.7; }
-                100% { transform: scale(1); opacity: 1; }
-            }
-        </style>
-    """))
-    
-    # 현재 위치 버튼 추가
-    locate_control = """
-        <div class='locate-button' onclick='locate()' title='현재 위치'>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="8"/>
-                <line x1="12" y1="2" x2="12" y2="4"/>
-                <line x1="12" y1="20" x2="12" y2="22"/>
-                <line x1="2" y1="12" x2="4" y2="12"/>
-                <line x1="20" y1="12" x2="22" y2="12"/>
-            </svg>
-        </div>
+    css = """
+    <style>
+        .locate-button {
+            background-color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+            cursor: pointer;
+            margin: 10px;
+            position: relative;
+            z-index: 1000;
+        }
+        .locate-button:hover {
+            background-color: #f4f4f4;
+        }
+        .current-location {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .locate-control {
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            z-index: 1000;
+        }
+    </style>
     """
     
-    # JavaScript 코드와 버튼을 지도에 추가
-    map1.get_root().html.add_child(folium.Element(location_js))
-    map1.get_root().html.add_child(folium.Element(
-        f"""
-        <script>
-            var map = document.querySelector('#map');
-            if (map) {{
-                var locateDiv = document.createElement('div');
-                locateDiv.style.position = 'absolute';
-                locateDiv.style.top = '80px';
-                locateDiv.style.left = '10px';
-                locateDiv.style.zIndex = '1000';
-                locateDiv.innerHTML = `{locate_control}`;
-                map.appendChild(locateDiv);
-            }}
-        </script>
-        """
-    ))
+    # 현재 위치 버튼 생성
+    locate_control = folium.Element("""
+        <div class='locate-control'>
+            <div class='locate-button' onclick='locate()' title='현재 위치'>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="8"/>
+                    <line x1="12" y1="2" x2="12" y2="4"/>
+                    <line x1="12" y1="20" x2="12" y2="22"/>
+                    <line x1="2" y1="12" x2="4" y2="12"/>
+                    <line x1="20" y1="12" x2="22" y2="12"/>
+                </svg>
+            </div>
+        </div>
+    """)
+
+    # 요소들을 지도에 추가
+    map1.get_root().header.add_child(folium.Element(css))
+    map1.get_root().script.add_child(folium.Element(location_js))
+    map1.get_root().html.add_child(locate_control)
     
     basemaps_vworld = {
         'VWorldBase': folium.TileLayer(
