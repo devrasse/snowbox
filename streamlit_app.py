@@ -7,11 +7,37 @@ import requests
 import warnings
 import numpy as np
 import folium
-from folium.plugins import MarkerCluster, Search, FloatImage, TagFilterButton, feature_group_sub_group, SideBySideLayers
+from folium.plugins import MarkerCluster, Search, FloatImage, TagFilterButton, feature_group_sub_group, SideBySideLayers, LocateControl
 import json
 from datetime import datetime
 import base64
+from streamlit_lottie import st_lottie
 
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
+
+# 페이지 설정
+st.set_page_config(layout='wide', initial_sidebar_state='expanded')
+
+# 데이터 로딩을 위한 캐시 함수
+@st.cache_data
+def load_data():
+    df = pd.read_excel('location_snow_box.xlsx')
+    df = df.dropna(subset='위도')
+    return df
+
+@st.cache_data
+def load_geojson():
+    with open("./dohwa1.json", encoding='utf-8') as file:
+        geo = json.loads(file.read())
+    return geo
+
+@st.cache_data
+def load_logo():
+    with open("image1.png", "rb") as f:
+        logo_data = f.read()
+    return base64.b64encode(logo_data).decode('utf-8')
 
 def wrap_text(words, max_line_length=20):
     words = words.split()
@@ -21,114 +47,160 @@ def wrap_text(words, max_line_length=20):
         if line_length + len(word) > max_line_length:
             wrapped_text += '<br>'
             line_length = 0
-            wrapped_text += word + ' '
-            line_length += len(word) + 1
+        wrapped_text += word + ' '
+        line_length += len(word) + 1
     return wrapped_text
 
-# 부서명 리스트
-departments = [
-    '숭의1.3동','숭의2동','숭의4동','용현1.4동','용현2동','용현3동','용현5동','학익1동','학익2동','도화1동','도화2.3동',
-    '주안1동','주안2동','주안3동','주안4동','주안5동','주안6동','주안7동','주안8동','관교동','문학동'
-]
+def create_map(df, geo, logo_img):
+    # 맵 생성
+    map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom=10, max_zoom=18)
+    
+    # 현재 위치 컨트롤 추가
+    LocateControl(
+        position='topleft',
+        strings={'title': '현재 위치'},
+        locateOptions={
+            'enableHighAccuracy': True,
+            'maxZoom': 18,
+            'watch': True,  # 위치 실시간 업데이트
+            'setView': True,  # 현재 위치로 지도 중심 이동
+            'timeout': 10000  # 10초 타임아웃
+        }
+    ).add_to(map1)
 
-
-image_path = 'snowbox.png'
-
-with open("image1.png", "rb") as f:
-      data = f.read()
-logo_img = base64.b64encode(data).decode('utf-8')
-
-df = pd.read_excel('location_snow_box.xlsx')
-
-df = df.dropna(subset='위도')
-
-unique_dongs = df['관리부서'].unique().tolist()
-
-dongs = []
-# 없는 시트는 기존 순서대로 추가
-for department in departments:
-      if department in unique_dongs:
-            dongs.append(department)
-
-
-# 스트림릿 페이지 제목
-st.title("미추홀구 제설함 위치도")
-
-# 기본 위치 (서울)로 지도 초기화
-map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom = 10, max_zoom=18)
-
-basemaps_vworld = {
+    basemaps_vworld = {
       'VWorldBase': folium.TileLayer(
             tiles='http://api.vworld.kr/req/wmts/1.0.0./CCA5DC05-6EDE-3BE5-A2DE-582966148562/Base/{z}/{y}/{x}.png',
             attr = 'VWorldBase', name='VWorldBase', overlay= True, control= False, min_zoom= 10)
 }
 
-basemaps_vworld['VWorldBase'].add_to(map1)
-# layer_right = folium.TileLayer(
-#     tiles='http://api.vworld.kr/req/wmts/1.0.0./CCA5DC05-6EDE-3BE5-A2DE-582966148562/Satellite/{z}/{y}/{x}.jpeg',
-#     attr = 'VWorldBase', name='VWorldBase', overlay= True, control= False, min_zoom= 10
-# )
-# layer_left = folium.TileLayer(
-#     tiles='http://api.vworld.kr/req/wmts/1.0.0./CCA5DC05-6EDE-3BE5-A2DE-582966148562/Base/{z}/{y}/{x}.png',
-#     attr = 'VWorldBase', name='VWorldBase', overlay= True, control= False, min_zoom= 10
-# )
+    basemaps_vworld['VWorldBase'].add_to(map1)
 
-# sbs = SideBySideLayers(layer_left=layer_left, layer_right=layer_right)
+    # 스타일 설정
+    style_function = lambda x: {"fillOpacity": 0, "opacity": 0.5}
+    tooltip_style = 'font-size: 13px; max-width: 500px;'
 
-# layer_left.add_to(map1)
-# layer_right.add_to(map1)
-# sbs.add_to(map1)
-
-
-style_function = lambda x: {
-    "fillOpacity" : 0,
-    "opacity" : 0.5} 
-
-# 동별 행정구역 경계 표시
-with open("./dohwa1.json", encoding='utf-8') as file:
-    geo = json.loads(file.read())
-    file.close()
-
-geojson = folium.GeoJson(geo, style_function, control= False)
-
-tooltip_style = 'font-size: 13px; max-width: 500px;'  # 원하는 너비로 조정
-
-for index, row in df.iterrows():
-    관리번호 = row['관리번호']
-    주소 = row['도로명주소']
-    내용물 = row['내용물']
-    
-    address = wrap_text(주소)
-    
-    popup_html = f"""
-    <table style="width:100%; border-collapse: collapse; border: 2px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
-        <tr>
-            <td style="border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 5px;"><b>관리번호</b></td>
-            <td style="border-bottom: 1px solid #ddd; padding: 5px;">{관리번호}</td>
-        </tr>
-        <tr>
-            <td style="border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 5px;"><b>주&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;소</b></td>
-            <td style="border-bottom: 1px solid #ddd; padding: 5px;">{address}</td>
-        </tr>
-        <tr>
-            <td style="border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 5px;"><b>설치일시</b></td>
-            <td style="border-bottom: 1px solid #ddd; padding: 5px;">{내용물}</td>
-        </tr>
-    </table>
-    """
-
-    tooltip_html = f"""
-    <b>관리번호:</b> {관리번호}<br>
-    """
-    
-    custom_icon = folium.CustomIcon(icon_image=image_path, icon_size=(50, 50))
-    marker = folium.Marker([row['위도'], row['경도']], icon = custom_icon, popup = folium.Popup(popup_html, style= tooltip_style,  max_width=300), tooltip = folium.Tooltip(tooltip_html, style= tooltip_style) ,tags=[row['관리부서']])
-    marker.add_to(map1)
-
+    # GeoJSON 추가
+    geojson = folium.GeoJson(geo, style_function, control=False)
     geojson.add_to(map1)
 
-    FloatImage('data:image/png;base64,{}'.format(logo_img),
-            bottom=5, left=5, height= 80, opacity=0.6).add_to(map1)
+    # 마커 추가
+    for index, row in df.iterrows():
+        address = wrap_text(row['도로명주소'])
+        popup_html = f"""
+        <table style="width:100%; border-collapse: collapse; border: 2px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+            <tr>
+                <td style="border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 5px;"><b>관리번호</b></td>
+                <td style="border-bottom: 1px solid #ddd; padding: 5px;">{row['관리번호']}</td>
+            </tr>
+            <tr>
+                <td style="border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 5px;"><b>주&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;소</b></td>
+                <td style="border-bottom: 1px solid #ddd; padding: 5px;">{address}</td>
+            </tr>
+            <tr>
+                <td style="border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 5px;"><b>내용물</b></td>
+                <td style="border-bottom: 1px solid #ddd; padding: 5px;">{row['내용물']}</td>
+            </tr>
+        </table>
+        """
+
+        tooltip_html = f"""
+        <b>관리번호:</b> {row['관리번호']}<br>
+        """
+        
+        custom_icon = folium.CustomIcon(icon_image='snowbox.png', icon_size=(50, 50))
+        marker = folium.Marker(
+            [row['위도'], row['경도']], 
+            icon=custom_icon,
+            popup=folium.Popup(popup_html, style=tooltip_style, max_width=300),
+            tooltip=folium.Tooltip(tooltip_html, style=tooltip_style),
+            tags=[row['관리부서']]
+        )
+        marker.add_to(map1)
+
+    # 로고 추가
+    FloatImage(
+        'data:image/png;base64,{}'.format(logo_img),
+        bottom=5, left=5, height=80, opacity=0.6
+    ).add_to(map1)
     
-# 폴리움 맵을 스트림릿에 표시
-st_data = st_folium(map1, width=1000, height=500)
+    return map1
+
+# 스타일 설정
+st.markdown(
+    """
+    <style>
+    .centered {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 0.5vh;
+    }
+    .stSpinner > div > div {
+        border-color: #1A9F68 !important;
+    }
+    .folium-map {
+        margin: 0 auto;
+        width: 100% !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# 타이틀 표시
+st.markdown('<div class="centered"><h1 style="text-align:center;">미추홀구 제설함 위치도</h1></div>', unsafe_allow_html=True)
+st.title("   ")
+
+# 데이터 로딩 상태를 표시할 컨테이너
+loading_container = st.empty()
+
+# 로티 파일 로드
+lottie_loading = load_lottiefile("lottiefiles/loading.json")
+
+with loading_container.container():
+    # 로티 애니메이션 표시
+    st_lottie(lottie_loading, height=300, key="loading")
+    
+    with st.spinner('데이터를 불러오는 중입니다...'):
+        # 데이터 로드
+        df = load_data()
+        geo = load_geojson()
+        logo_img = load_logo()
+
+        # 사이드바 필터 설정
+        department = np.append(['전체'], df['관리부서'].unique())
+        selected_department = st.sidebar.selectbox('부서명', department)
+
+        # 선택된 부서에 따라 데이터 필터링
+        if selected_department != '전체':
+            selected_df = df[df['관리부서'] == selected_department]
+        else:
+            selected_df = df  # 전체 데이터 사용
+        
+        # 맵 생성
+        map1 = create_map(selected_df, geo, logo_img)
+
+# 로딩 컨테이너 제거
+loading_container.empty()
+
+# 맵 표시
+_,col1,_ = st.columns([0.1,0.8,0.1])
+with col1:
+    st_data = st_folium(
+        map1,
+        width=1200,
+        height=800,
+        returned_objects=["last_clicked"],
+        key="folium_map"
+    )
+#st_data = st_folium(map1, width=1000, height=500)
+# # 맵 표시
+# with st.container(border=True,height=740):
+#       st_data = st_folium(
+#             map1,
+#             width="100%",
+#             height=700,
+#             returned_objects=["last_clicked"],
+#             key="folium_map"
+#       )
