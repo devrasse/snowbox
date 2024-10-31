@@ -146,10 +146,6 @@ st.markdown(
     .stSpinner > div > div {
         border-color: #1A9F68 !important;
     }
-    .folium-map {
-        margin: 0 auto;
-        width: 100% !important;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -192,10 +188,12 @@ with loading_container.container():
 loading_container.empty()
 
 # 맵 표시
-st_data = st_folium(
-    map1,
-    width="100%",
-    height=700,
-    returned_objects=["last_clicked"],
-    key="folium_map"
-)
+col1 = st.columns(1)
+with col1: 
+    st_data = st_folium(
+        map1,
+        width=1000,
+        height=500,
+        returned_objects=["last_clicked"],
+        key="folium_map" 
+    )
