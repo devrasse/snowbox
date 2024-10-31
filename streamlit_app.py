@@ -191,7 +191,17 @@ with loading_container.container():
 # 로딩 컨테이너 제거
 loading_container.empty()
 
-st_data = st_folium(map1, width=1000, height=500)
+# 맵 표시
+_,col1,_ = st.columns([0.1,0.8,0.1])
+with col1:
+    st_data = st_folium(
+        map1,
+        width=1200,
+        height=800,
+        returned_objects=["last_clicked"],
+        key="folium_map"
+    )
+#st_data = st_folium(map1, width=1000, height=500)
 # # 맵 표시
 # with st.container(border=True,height=740):
 #       st_data = st_folium(
