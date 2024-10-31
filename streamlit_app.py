@@ -191,12 +191,13 @@ with loading_container.container():
 # 로딩 컨테이너 제거
 loading_container.empty()
 
-# 맵 표시
-with st.container(border=True,height=740):
-      st_data = st_folium(
-            map1,
-            width="100%",
-            height=700,
-            returned_objects=["last_clicked"],
-            key="folium_map"
-      )
+st_data = st_folium(map1, width=1000, height=500)
+# # 맵 표시
+# with st.container(border=True,height=740):
+#       st_data = st_folium(
+#             map1,
+#             width="100%",
+#             height=700,
+#             returned_objects=["last_clicked"],
+#             key="folium_map"
+#       )
