@@ -86,7 +86,7 @@ def create_map(df, geo, radius, selected_dong='전체'):
         zoom_start = 15  # 기본 줌 레벨
 
     # 맵 생성
-    map1 = folium.Map(location=center_location, zoom_start=zoom_start, min_zoom=10, max_zoom=18)
+    map1 = folium.Map(location=center_location, zoom_start=zoom_start, min_zoom=10, max_zoom=17)
     
     basemaps_vworld = {
         'VWorldBase': folium.TileLayer(
