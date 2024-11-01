@@ -13,31 +13,6 @@ from datetime import datetime
 import base64
 from streamlit_lottie import st_lottie
 
-# 동별 중심 좌표 데이터
-dong_centers = {
-    '숭의2동': [37.46091, 126.6476],
-    '숭의4동': [37.46236, 126.6571],
-    '용현2동': [37.45616, 126.6435],
-    '용현3동': [37.45537, 126.6527],
-    '용현5동': [37.44897, 126.639],
-    '학익1동': [37.441, 126.655],
-    '학익2동': [37.4415, 126.6741],
-    '도화1동': [37.46217, 126.6692],
-    '주안1동': [37.46202, 126.6806],
-    '주안2동': [37.45456, 126.6713],
-    '주안3동': [37.44845, 126.6716],
-    '주안4동': [37.45444, 126.6871],
-    '주안5동': [37.46922, 126.6805],
-    '주안6동': [37.46102, 126.6908],
-    '주안7동': [37.44726, 126.6778],
-    '주안8동': [37.44765, 126.6853],
-    '관교동': [37.44273, 126.694],
-    '문학동': [37.43653, 126.6853],
-    '숭의1·3동': [37.46683, 126.6469],
-    '용현1·4동': [37.45177, 126.6589],
-    '도화2·3동': [37.47351, 126.6623],
-}
-
 def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
@@ -76,17 +51,9 @@ def wrap_text(words, max_line_length=20):
         line_length += len(word) + 1
     return wrapped_text
 
-def create_map(df, geo, radius, selected_dong='전체'):
-    # 맵 중심 좌표 설정
-    if selected_dong != '전체' and selected_dong in dong_centers:
-        center_location = dong_centers[selected_dong]
-        zoom_start = 16  # 동 선택시 더 가깝게 확대
-    else:
-        center_location = [37.460898143, 126.673829865]  # 기본 중심점
-        zoom_start = 15  # 기본 줌 레벨
-
+def create_map(df, geo, radius):
     # 맵 생성
-    map1 = folium.Map(location=center_location, zoom_start=zoom_start, min_zoom=10, max_zoom=18)
+    map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom=10, max_zoom=18)
     
     basemaps_vworld = {
         'VWorldBase': folium.TileLayer(
@@ -216,7 +183,7 @@ with loading_container.container():
             selected_df = df  # 전체 데이터 사용
         
         # 맵 생성
-        map1 = create_map(selected_df, geo, radius, selected_department)
+        map1 = create_map(selected_df, geo, radius)
 
 # 로딩 컨테이너 제거
 loading_container.empty()
