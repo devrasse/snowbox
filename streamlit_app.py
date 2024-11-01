@@ -105,9 +105,11 @@ def create_map(df, geo, radius):
         )
         marker.add_to(map1)
 
-        if radius is not 0:
+        if radius != 0:
             circle = folium.Circle(radius=radius,location=[row['위도'], row['경도']], color='blue', fill=True, popup=f'반경 {radius}m')
             circle.add_to(map1)
+            
+    return map1
 
 # 스타일 설정
 st.markdown(
