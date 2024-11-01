@@ -75,7 +75,7 @@ def create_map(df, geo, radius):
         zoom_on_click=True,
         highlight_function=lambda feature: {
             "fillColor": (
-                "green" if "e" in feature["properties"]["name"].lower() else "#ffff00"
+                "green" if "e" in feature["properties"]["adm_nm"].lower() else "#ffff00"
             ),
             "fillOpacity": 0.3,
             "color": "#3388ff",
