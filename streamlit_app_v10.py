@@ -7,7 +7,7 @@ import requests
 import warnings
 import numpy as np
 import folium
-from folium.plugins import MarkerCluster, Search, FloatImage, TagFilterButton, feature_group_sub_group, SideBySideLayers
+from folium.plugins import MarkerCluster, Search, FloatImage, TagFilterButton, feature_group_sub_group, SideBySideLayers, LocateControl
 import json
 from datetime import datetime
 import base64
@@ -51,9 +51,98 @@ def wrap_text(words, max_line_length=20):
         line_length += len(word) + 1
     return wrapped_text
 
+
 def create_map(df, geo, logo_img):
     # 맵 생성
     map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom=10, max_zoom=18)
+    
+    # JavaScript 코드로 현재 위치 기능 구현
+    location_js = """
+        function locate() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var lat = position.coords.latitude;
+                        var lng = position.coords.longitude;
+                        map.setView([lat, lng], 16);
+                        L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: 'current-location',
+                                html: '<div style="background-color: #4A90E2; width: 12px; height: 12px; border-radius: 50%; border: 3px solid white;"></div>'
+                            })
+                        }).addTo(map);
+                    },
+                    function(error) {
+                        alert('위치를 찾을 수 없습니다.');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                alert('위치 서비스를 지원하지 않는 브라우저입니다.');
+            }
+        }
+    """
+    
+    # CSS 스타일 추가
+    css = """
+    <style>
+        .locate-button {
+            background-color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+            cursor: pointer;
+            margin: 10px;
+            position: relative;
+            z-index: 1000;
+        }
+        .locate-button:hover {
+            background-color: #f4f4f4;
+        }
+        .current-location {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .locate-control {
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            z-index: 1000;
+        }
+    </style>
+    """
+    
+    # 현재 위치 버튼 생성
+    locate_control = folium.Element("""
+        <div class='locate-control'>
+            <div class='locate-button' onclick='locate()' title='현재 위치'>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="8"/>
+                    <line x1="12" y1="2" x2="12" y2="4"/>
+                    <line x1="12" y1="20" x2="12" y2="22"/>
+                    <line x1="2" y1="12" x2="4" y2="12"/>
+                    <line x1="20" y1="12" x2="22" y2="12"/>
+                </svg>
+            </div>
+        </div>
+    """)
+
+    # 요소들을 지도에 추가
+    map1.get_root().header.add_child(folium.Element(css))
+    map1.get_root().script.add_child(folium.Element(location_js))
+    map1.get_root().html.add_child(locate_control)
     
     basemaps_vworld = {
         'VWorldBase': folium.TileLayer(
@@ -126,6 +215,10 @@ st.markdown(
     .stSpinner > div > div {
         border-color: #1A9F68 !important;
     }
+    .folium-map {
+        margin: 0 auto;
+        width: 100% !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -168,10 +261,22 @@ with loading_container.container():
 loading_container.empty()
 
 # 맵 표시
-st_data = st_folium(
-    map1,
-    width=1000,
-    height=500,
-    returned_objects=["last_clicked"],
-    key="folium_map"
-)
+_,col1,_ = st.columns([0.1,0.8,0.1])
+with col1:
+    st_data = st_folium(
+        map1,
+        width=1200,
+        height=800,
+        returned_objects=["last_clicked"],
+        key="folium_map"
+    )
+#st_data = st_folium(map1, width=1000, height=500)
+# # 맵 표시
+# with st.container(border=True,height=740):
+#       st_data = st_folium(
+#             map1,
+#             width="100%",
+#             height=700,
+#             returned_objects=["last_clicked"],
+#             key="folium_map"
+#       )
