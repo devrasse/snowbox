@@ -67,21 +67,9 @@ def create_map(df, geo, radius):
     style_function = lambda x: {"fillOpacity": 0, "opacity": 0.5}
     tooltip_style = 'font-size: 13px; max-width: 500px;'
 
-    # GeoJSON 추가 - 하이라이트 기능 포함
+    # GeoJSON 추가
     geojson = folium.GeoJson(
-        geo,
-        style_function=style_function,
-        control=False,
-        zoom_on_click=True,
-        highlight_function=lambda feature: {
-            "fillColor": (
-                "green" if "e" in feature["properties"]["name"].lower() else "#ffff00"
-            ),
-            "fillOpacity": 0.3,
-            "color": "#3388ff",
-            "weight": 3
-        }
-    )
+        geo, style_function, control=False,zoom_on_click=True)
     geojson.add_to(map1)
 
     # 마커 추가
