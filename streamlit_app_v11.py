@@ -51,7 +51,7 @@ def wrap_text(words, max_line_length=20):
         line_length += len(word) + 1
     return wrapped_text
 
-def create_map(df, geo, radius):
+def create_map(df, geo, logo_img):
     # 맵 생성
     map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom=10, max_zoom=18)
     
@@ -105,9 +105,13 @@ def create_map(df, geo, radius):
         )
         marker.add_to(map1)
 
-        if radius is not 0:
-            circle = folium.Circle(radius=radius,location=[row['위도'], row['경도']], color='blue', fill=True, popup=f'반경 {radius}m')
-            circle.add_to(map1)
+    # 로고 추가
+    FloatImage(
+        'data:image/png;base64,{}'.format(logo_img),
+        bottom=5, left=5, height=80, opacity=0.6
+    ).add_to(map1)
+    
+    return map1
 
 # 스타일 설정
 st.markdown(
@@ -151,9 +155,6 @@ with loading_container.container():
         department = np.append(['전체'], df['관리부서'].unique())
         selected_department = st.sidebar.selectbox('부서명', department)
 
-        circle = [0,50,100,200]
-        radius = st.sidebar.selectbox('반경', circle)
-
         # 선택된 부서에 따라 데이터 필터링
         if selected_department != '전체':
             selected_df = df[df['관리부서'] == selected_department]
@@ -161,7 +162,7 @@ with loading_container.container():
             selected_df = df  # 전체 데이터 사용
         
         # 맵 생성
-        map1 = create_map(selected_df, geo, radius)
+        map1 = create_map(selected_df, geo, logo_img)
 
 # 로딩 컨테이너 제거
 loading_container.empty()
