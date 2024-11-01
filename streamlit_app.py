@@ -68,7 +68,7 @@ def create_map(df, geo, radius):
     tooltip_style = 'font-size: 13px; max-width: 500px;'
 
     # GeoJSON 추가
-    geojson = folium.GeoJson(geo, style_function, control=False)
+    geojson = folium.GeoJson(geo, style_function, control=True)
     geojson.add_to(map1)
 
     # 마커 추가
