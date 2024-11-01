@@ -86,7 +86,7 @@ def create_map(df, geo, radius, selected_dong='전체'):
         zoom_start = 15  # 기본 줌 레벨
 
     # 맵 생성
-    map1 = folium.Map(location=center_location, zoom_start=zoom_start, min_zoom=10, max_zoom=17)
+    map1 = folium.Map(location=center_location, zoom_start=zoom_start, min_zoom=10, max_zoom=18)
     
     basemaps_vworld = {
         'VWorldBase': folium.TileLayer(
@@ -183,7 +183,7 @@ st.markdown(
 )
 
 # 타이틀 표시
-st.markdown('<div class="centered"><h1 style="text-align:center;">미추홀구 제설함 위치도</h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="centered">미추홀구 제설함 위치도</div>', unsafe_allow_html=True)
 st.title("   ")
 
 # 데이터 로딩 상태를 표시할 컨테이너
@@ -204,7 +204,7 @@ with loading_container.container():
 
         # 사이드바 필터 설정
         department = np.append(['전체'], df['관리부서'].unique())
-        selected_department = st.sidebar.selectbox('부서명', department)
+        selected_department = st.sidebar.selectbox('동명', department)
 
         circle = [0,50,100,200]
         radius = st.sidebar.selectbox('반경', circle)
