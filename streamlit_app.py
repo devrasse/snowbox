@@ -52,7 +52,7 @@ def wrap_text(words, max_line_length=20):
     return wrapped_text
 
 
-ef create_map(df, geo, logo_img):
+def create_map(df, geo, logo_img):
     # 맵 생성
     map1 = folium.Map(location=[37.460898143, 126.673829865], zoom_start=15, min_zoom=10, max_zoom=18)
     

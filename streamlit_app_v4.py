@@ -114,7 +114,7 @@ st.markdown(
 
 # 타이틀 표시
 st.markdown('<div class="centered"><h1 style="text-align:center;">미추홀구 제설함 위치도</h1></div>', unsafe_allow_html=True)
-
+st.title("   ")
 # 데이터 로딩 상태 표시
 loading_container = st.empty()
 lottie_loading = load_lottiefile("lottiefiles/loading.json")
