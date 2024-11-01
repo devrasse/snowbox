@@ -183,7 +183,7 @@ st.markdown(
 )
 
 # 타이틀 표시
-st.markdown('<div class="centered">미추홀구 제설함 위치도</div>', unsafe_allow_html=True)
+st.markdown('<div class="centered"><h1 style="text-align:center;">미추홀구 제설함 위치도</h1></div>', unsafe_allow_html=True)
 st.title("   ")
 
 # 데이터 로딩 상태를 표시할 컨테이너
